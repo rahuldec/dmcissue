@@ -74,7 +74,7 @@ export default function ImportStudents() {
       </div>
 
       <div style={s.infoBox}>
-        <strong>CSV format hona chahiye:</strong> name, roll_number, course, semester, college
+        <strong>File Format : CSV format</strong> name, roll_number, course, semester, college
         <br />
         <span style={{ color:'#888780' }}> </span>
       </div>
