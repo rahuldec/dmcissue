@@ -43,7 +43,7 @@ export default function ImportStudents() {
       try {
         const rows = parseCSV(evt.target.result).map(normalizeRow).filter(r => r.name && r.roll_number)
         setPreview(rows)
-      } catch { setError('File parse nahi ho saki. CSV format check karo.') }
+      } catch { setError('Check CSV format') }
     }
     reader.readAsText(f)
   }
@@ -70,21 +70,21 @@ export default function ImportStudents() {
     <div>
       <div style={s.header}>
         <h1 style={s.title}>Import Students</h1>
-        <p style={s.sub}>University ki CSV/Excel file upload karo — students import ho jayenge</p>
+        <p style={s.sub}>Import by Excel</p>
       </div>
 
       <div style={s.infoBox}>
         <strong>CSV format hona chahiye:</strong> name, roll_number, course, semester, college
         <br />
-        <span style={{ color:'#888780' }}>First row headers hone chahiye. Excel file ko CSV ke roop mein save karo pehle.</span>
+        <span style={{ color:'#888780' }}> </span>
       </div>
 
       <div style={s.uploadBox}>
         <input type="file" accept=".csv" onChange={handleFile} style={s.fileInput} id="csvfile" />
         <label htmlFor="csvfile" style={s.uploadLabel}>
           <div style={s.uploadIcon}>📄</div>
-          <div style={s.uploadText}>CSV file choose karo</div>
-          <div style={s.uploadSub}>{file ? file.name : 'ya yahan drag & drop karo'}</div>
+          <div style={s.uploadText}>Select File</div>
+          <div style={s.uploadSub}>{file ? file.name : 'drop here'}</div>
         </label>
       </div>
 
@@ -92,7 +92,7 @@ export default function ImportStudents() {
 
       {result && (
         <div style={s.success}>
-          ✓ {result.count} students successfully import ho gaye!
+          ✓ {result.count} Students successfully imported.
         </div>
       )}
 
@@ -123,7 +123,7 @@ export default function ImportStudents() {
             ))}
             {preview.length > 20 && (
               <div style={{ textAlign:'center', padding:12, fontSize:12, color:'#888780' }}>
-                + {preview.length - 20} aur students…
+                + {preview.length - 20} more students…
               </div>
             )}
           </div>

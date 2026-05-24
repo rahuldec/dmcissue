@@ -69,17 +69,17 @@ export default function IssueDMC({ staffEmail }) {
 
       <div style={s.header}>
         <h1 style={s.title}>Issue DMC</h1>
-        <p style={s.sub}>College select karo, student search karo, DMC issue karo</p>
+        <p style={s.sub}>Select College</p>
       </div>
 
       <div style={s.filterRow}>
         <select style={s.select} value={selectedCollege} onChange={e => { setSelectedCollege(e.target.value); setSearch('') }}>
-          <option value="">-- College select karo --</option>
+          <option value="">-- Select College --</option>
           {colleges.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
         <input
           style={s.searchInput}
-          placeholder="Naam ya Roll Number se search karo…"
+          placeholder="search by roll no"
           value={search}
           onChange={e => setSearch(e.target.value)}
           disabled={!selectedCollege}
