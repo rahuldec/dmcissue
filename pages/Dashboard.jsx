@@ -1,4 +1,3 @@
-```jsx
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import IssueDMC from './IssueDMC'
@@ -21,12 +20,10 @@ export default function Dashboard({ session }) {
   return (
     <div style={s.page}>
 
-      {/* HEADER */}
       <div style={s.topbar}>
 
         <div style={s.leftSection}>
 
-          {/* BRAND */}
           <div style={s.brand}>
             <img
               src="https://okiedokie-erp-images.s3.ap-south-1.amazonaws.com/IECC/2026/02/sourceURL/9b06df36955608e5de50-WhatsApp%20Image%202026-02-24%20at%2010.46.49%20AM.jpeg"
@@ -47,7 +44,6 @@ export default function Dashboard({ session }) {
 
           <div style={s.divider}></div>
 
-          {/* NAVIGATION */}
           <div style={s.navRow}>
             {nav.map((n) => (
               <button
@@ -65,7 +61,6 @@ export default function Dashboard({ session }) {
 
         </div>
 
-        {/* USER SECTION */}
         <div style={s.userRow}>
 
           <div style={s.userBadge}>
@@ -93,7 +88,6 @@ export default function Dashboard({ session }) {
 
       </div>
 
-      {/* PAGE CONTENT */}
       <div style={s.content}>
 
         {page === 'issue' && (
@@ -114,7 +108,6 @@ export default function Dashboard({ session }) {
 }
 
 const s = {
-
   page: {
     minHeight: '100vh',
     background: '#F7F6F3',
@@ -189,7 +182,6 @@ const s = {
     borderRadius: 12,
     cursor: 'pointer',
     fontWeight: 500,
-    transition: '0.2s',
   },
 
   navActive: {
@@ -236,7 +228,6 @@ const s = {
     borderRadius: 12,
     fontWeight: 600,
     cursor: 'pointer',
-    transition: '0.2s',
   },
 
   content: {
@@ -245,4 +236,3 @@ const s = {
     margin: '0 auto',
   },
 }
-```
