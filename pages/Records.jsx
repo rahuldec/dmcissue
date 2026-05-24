@@ -43,7 +43,7 @@ export default function Records() {
       <div style={s.header}>
         <div>
           <h1 style={s.title}>DMC Records</h1>
-          <p style={s.sub}>Sabhi issued DMCs ka record</p>
+          <p style={s.sub}>All Records</p>
         </div>
         <button style={s.exportBtn} onClick={exportCSV}>⬇ Export CSV</button>
       </div>

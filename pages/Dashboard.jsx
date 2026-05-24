@@ -161,7 +161,7 @@ const s = {
   },
 
   brandName: {
-    fontSize: 30,
+    fontSize: 22,
     fontWeight: 800,
     color: '#151515',
     lineHeight: 1,
