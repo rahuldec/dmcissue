@@ -20,30 +20,33 @@ export default function Dashboard({ session }) {
   return (
     <div style={s.page}>
 
+      {/* HEADER */}
       <div style={s.topbar}>
 
+        {/* LEFT SIDE */}
         <div style={s.leftSection}>
 
-          <div style={s.brand}>
+          {/* LOGO CARD */}
+          <div style={s.logoCard}>
             <img
               src="https://okiedokie-erp-images.s3.ap-south-1.amazonaws.com/IECC/2026/02/sourceURL/9b06df36955608e5de50-WhatsApp%20Image%202026-02-24%20at%2010.46.49%20AM.jpeg"
               alt="IEC Logo"
               style={s.logo}
             />
+          </div>
 
-            <div>
-              <div style={s.brandName}>
-                DMC Issue Tracker
-              </div>
+          {/* BRAND TEXT */}
+          <div>
+            <div style={s.brandName}>
+              DMC Issue Tracker
+            </div>
 
-              <div style={s.brandSub}>
-                IEC College • Okie Dokie Solutions
-              </div>
+            <div style={s.brandSub}>
+              IEC College of Engineering & Technology
             </div>
           </div>
 
-          <div style={s.divider}></div>
-
+          {/* NAVIGATION */}
           <div style={s.navRow}>
             {nav.map((n) => (
               <button
@@ -61,20 +64,21 @@ export default function Dashboard({ session }) {
 
         </div>
 
+        {/* USER SECTION */}
         <div style={s.userRow}>
 
-          <div style={s.userBadge}>
-            {session.user.email?.charAt(0).toUpperCase()}
-          </div>
-
-          <div>
+          <div style={s.userInfo}>
             <div style={s.userEmail}>
               {session.user.email}
             </div>
 
             <div style={s.userRole}>
-              Staff
+              Staff Panel
             </div>
+          </div>
+
+          <div style={s.userBadge}>
+            {session.user.email?.charAt(0).toUpperCase()}
           </div>
 
           <button
@@ -88,6 +92,7 @@ export default function Dashboard({ session }) {
 
       </div>
 
+      {/* PAGE CONTENT */}
       <div style={s.content}>
 
         {page === 'issue' && (
@@ -103,91 +108,94 @@ export default function Dashboard({ session }) {
         )}
 
       </div>
+
     </div>
   )
 }
 
 const s = {
+
   page: {
     minHeight: '100vh',
-    background: '#F7F6F3',
+    background: '#F7F8FA',
     fontFamily: 'Inter, sans-serif',
   },
 
   topbar: {
     background: '#ffffff',
-    borderBottom: '1px solid #ECE8E1',
-    padding: '0 36px',
-    height: 78,
+    borderBottom: '1px solid #ECECEC',
+    padding: '0 42px',
+    height: 88,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
     position: 'sticky',
     top: 0,
-    zIndex: 20,
-    boxShadow: '0 2px 12px rgba(0,0,0,0.03)',
+    zIndex: 100,
+    boxShadow: '0 4px 18px rgba(0,0,0,0.04)',
   },
 
   leftSection: {
     display: 'flex',
     alignItems: 'center',
-    gap: 24,
+    gap: 18,
   },
 
-  brand: {
+  logoCard: {
+    width: 68,
+    height: 68,
+    background: '#fff',
+    borderRadius: 18,
     display: 'flex',
     alignItems: 'center',
-    gap: 14,
+    justifyContent: 'center',
+    boxShadow: '0 6px 20px rgba(0,0,0,0.08)',
+    border: '1px solid #EFEFEF',
+    overflow: 'hidden',
   },
 
   logo: {
-    width: 52,
-    height: 52,
-    objectFit: 'cover',
-    borderRadius: 12,
-    background: '#fff',
-    border: '1px solid #ECE8E1',
+    width: 58,
+    height: 58,
+    objectFit: 'contain',
   },
 
   brandName: {
-    fontSize: 24,
-    fontWeight: 700,
-    color: '#181818',
-    letterSpacing: '-0.5px',
+    fontSize: 30,
+    fontWeight: 800,
+    color: '#151515',
+    lineHeight: 1,
+    letterSpacing: '-1px',
   },
 
   brandSub: {
     fontSize: 13,
-    color: '#7D7B76',
-    marginTop: 2,
-  },
-
-  divider: {
-    width: 1,
-    height: 38,
-    background: '#E7E2DA',
+    color: '#7B7B7B',
+    marginTop: 6,
   },
 
   navRow: {
     display: 'flex',
+    alignItems: 'center',
     gap: 10,
+    marginLeft: 36,
   },
 
   navBtn: {
-    fontSize: 14,
-    color: '#5E5B55',
-    background: 'transparent',
     border: 'none',
-    padding: '10px 18px',
-    borderRadius: 12,
+    background: 'transparent',
+    color: '#5B5B5B',
+    fontSize: 14,
+    fontWeight: 600,
+    padding: '12px 18px',
+    borderRadius: 14,
     cursor: 'pointer',
-    fontWeight: 500,
+    transition: '0.2s ease',
   },
 
   navActive: {
     background: '#FFF1EA',
-    color: '#D85B2B',
-    fontWeight: 600,
+    color: '#E05A2B',
   },
 
   userRow: {
@@ -196,43 +204,49 @@ const s = {
     gap: 14,
   },
 
+  userInfo: {
+    textAlign: 'right',
+  },
+
+  userEmail: {
+    fontSize: 13,
+    fontWeight: 700,
+    color: '#222',
+  },
+
+  userRole: {
+    fontSize: 11,
+    color: '#8A8A8A',
+    marginTop: 2,
+  },
+
   userBadge: {
-    width: 42,
-    height: 42,
+    width: 44,
+    height: 44,
     borderRadius: '50%',
-    background: '#E05A2B',
+    background: 'linear-gradient(135deg, #E05A2B, #FF8B5C)',
     color: '#fff',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     fontWeight: 700,
     fontSize: 16,
-  },
-
-  userEmail: {
-    fontSize: 13,
-    fontWeight: 600,
-    color: '#222',
-  },
-
-  userRole: {
-    fontSize: 11,
-    color: '#8A8882',
+    boxShadow: '0 6px 14px rgba(224,90,43,0.25)',
   },
 
   logoutBtn: {
     background: '#fff',
-    border: '1px solid #F2C7B8',
+    border: '1px solid #FFD7C7',
     color: '#E05A2B',
-    padding: '10px 16px',
-    borderRadius: 12,
-    fontWeight: 600,
+    padding: '11px 18px',
+    borderRadius: 14,
+    fontWeight: 700,
     cursor: 'pointer',
   },
 
   content: {
-    padding: 32,
-    maxWidth: 1200,
+    padding: 36,
+    maxWidth: 1300,
     margin: '0 auto',
   },
 }
