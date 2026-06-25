@@ -36,13 +36,23 @@ export default function Records() {
 
     setDeletingId(record.id)
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('dmc_records')
       .delete()
       .eq('id', record.id)
+      .select()
 
     if (error) {
       alert(`Could not delete record: ${error.message}`)
+    } else if (!data || data.length === 0) {
+      // Supabase returns no error when a delete matches 0 rows due to
+      // a Row Level Security policy blocking it - this is the most
+      // common reason a delete silently "does nothing"
+      alert(
+        'The record was not deleted. This is usually because Row Level ' +
+        'Security in Supabase is blocking deletes on the dmc_records table. ' +
+        'Add a DELETE policy for this table (or for your logged-in role) in Supabase.'
+      )
     } else {
       setRecords(prev => prev.filter(r => r.id !== record.id))
     }
@@ -95,7 +105,7 @@ export default function Records() {
             <div style={s.th}>Date & Time</div>
             <div style={{ ...s.th, flex: 0.6, textAlign: 'right' }}>Actions</div>
           </div>
-          {records.length === 0 && <div style={s.empty}>Koi record nahi mila.</div>}
+          {records.length === 0 && <div style={s.empty}>No records found.</div>}
           {records.map(r => (
             <div key={r.id} style={s.trow}>
               <div style={{ ...s.td, flex:2, fontWeight:500 }}>{r.student_name}</div>
