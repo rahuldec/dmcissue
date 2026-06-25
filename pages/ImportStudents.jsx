@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import * as XLSX from 'xlsx'
 import { supabase } from '../lib/supabase'
 
 export default function ImportStudents() {
@@ -56,7 +57,34 @@ export default function ImportStudents() {
       .filter(r => r.name || r.student_name || r.roll_number)
   }
 
-  function normalizeRow(row) {
+  // normalize any object's keys to lower_snake_case so CSV and
+  // Excel rows (which come back with whatever header casing/spacing
+  // was in the sheet) can be matched the same way
+  function normalizeKeys(row) {
+
+    const obj = {}
+
+    Object.keys(row).forEach(key => {
+
+      const cleanKey = key
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, '_')
+        .replace(/[^a-z_]/g, '')
+
+      const val = row[key]
+
+      obj[cleanKey] = val === undefined || val === null
+        ? ''
+        : String(val).trim()
+    })
+
+    return obj
+  }
+
+  function normalizeRow(rawRow) {
+
+    const row = normalizeKeys(rawRow)
 
     return {
       name: row.name || row.student_name || row.student || '',
@@ -70,7 +98,7 @@ export default function ImportStudents() {
     }
   }
 
-  // HANDLE CSV FILE
+  // HANDLE FILE (CSV OR EXCEL)
   function handleFile(e) {
 
     const f = e.target.files[0]
@@ -80,27 +108,81 @@ export default function ImportStudents() {
     setFile(f)
     setResult(null)
     setError('')
+    setPreview([])
 
-    const reader = new FileReader()
+    const name = f.name.toLowerCase()
+    const isExcel = name.endsWith('.xlsx') || name.endsWith('.xls')
 
-    reader.onload = evt => {
+    if (isExcel) {
 
-      try {
+      const reader = new FileReader()
 
-        const rows = parseCSV(evt.target.result)
-          .map(normalizeRow)
-          .filter(r => r.name && r.roll_number)
+      reader.onload = evt => {
 
-        setPreview(rows)
+        try {
 
-      } catch {
+          const data = new Uint8Array(evt.target.result)
+          const workbook = XLSX.read(data, { type: 'array' })
 
-        setError('Check CSV format')
+          const sheetName = workbook.SheetNames[0]
+          const sheet = workbook.Sheets[sheetName]
 
+          // defval keeps missing cells as '' instead of being dropped,
+          // so columns line up the same way the CSV parser handles them
+          const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' })
+
+          const cleaned = rows
+            .map(normalizeRow)
+            .filter(r => r.name && r.roll_number)
+
+          if (!cleaned.length) {
+            setError('No valid rows found. Check that the sheet has name and roll_number columns.')
+            return
+          }
+
+          setPreview(cleaned)
+
+        } catch {
+
+          setError('Check Excel file format')
+
+        }
       }
-    }
 
-    reader.readAsText(f)
+      reader.onerror = () => setError('Could not read file')
+
+      reader.readAsArrayBuffer(f)
+
+    } else {
+
+      const reader = new FileReader()
+
+      reader.onload = evt => {
+
+        try {
+
+          const rows = parseCSV(evt.target.result)
+            .map(normalizeRow)
+            .filter(r => r.name && r.roll_number)
+
+          if (!rows.length) {
+            setError('No valid rows found. Check that the CSV has name and roll_number columns.')
+            return
+          }
+
+          setPreview(rows)
+
+        } catch {
+
+          setError('Check CSV format')
+
+        }
+      }
+
+      reader.onerror = () => setError('Could not read file')
+
+      reader.readAsText(f)
+    }
   }
 
   // IMPORT CSV STUDENTS
@@ -201,7 +283,7 @@ export default function ImportStudents() {
         </h1>
 
         <p style={s.sub}>
-          Add students manually or import using CSV
+          Add students manually or import using CSV / Excel
         </p>
       </div>
 
@@ -281,19 +363,21 @@ export default function ImportStudents() {
       <div style={s.card}>
 
         <h2 style={s.sectionTitle}>
-          Import Students by CSV
+          Import Students by CSV or Excel
         </h2>
 
         <div style={s.infoBox}>
-          <strong>CSV Format:</strong>{' '}
+          <strong>Required columns:</strong>{' '}
           name, roll_number, course, semester, college
+          <br />
+          Accepted files: .csv, .xlsx, .xls
         </div>
 
         <div style={s.uploadBox}>
 
           <input
             type="file"
-            accept=".csv"
+            accept=".csv,.xlsx,.xls,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             onChange={handleFile}
             style={s.fileInput}
             id="csvfile"
@@ -306,11 +390,11 @@ export default function ImportStudents() {
             </div>
 
             <div style={s.uploadText}>
-              Select CSV File
+              Select CSV or Excel File
             </div>
 
             <div style={s.uploadSub}>
-              {file ? file.name : 'Click to upload'}
+              {file ? file.name : 'Click to upload (.csv, .xlsx, .xls)'}
             </div>
 
           </label>
