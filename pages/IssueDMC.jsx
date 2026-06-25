@@ -7,8 +7,11 @@ export default function IssueDMC({ staffEmail }) {
   const [loading, setLoading] = useState(false)
   const [issuing, setIssuing] = useState(null)
   const [toast, setToast] = useState('')
+  const [page, setPage] = useState(1)
+  const pageSize = 25
 
   useEffect(() => {
+    setPage(1)
     fetchStudents()
   }, [search])
 
@@ -83,6 +86,16 @@ export default function IssueDMC({ staffEmail }) {
 
   const issued = students.filter(s => s.dmc_issued).length
   const pending = students.filter(s => !s.dmc_issued).length
+
+  const totalPages = Math.max(1, Math.ceil(students.length / pageSize))
+  const safePage = Math.min(page, totalPages)
+  const pageStart = (safePage - 1) * pageSize
+  const pagedStudents = students.slice(pageStart, pageStart + pageSize)
+
+  function goToPage(p) {
+    const clamped = Math.min(Math.max(1, p), totalPages)
+    setPage(clamped)
+  }
 
   return (
     <div>
@@ -177,7 +190,7 @@ export default function IssueDMC({ staffEmail }) {
             </div>
           </div>
 
-          {students.map(student => (
+          {pagedStudents.map(student => (
 
             <div
               key={student.id}
@@ -243,6 +256,49 @@ export default function IssueDMC({ staffEmail }) {
             </div>
 
           ))}
+
+        </div>
+      )}
+
+      {/* PAGINATION */}
+      {!loading && students.length > pageSize && (
+        <div style={s.paginationRow}>
+
+          <div style={s.pageInfo}>
+            Showing {pageStart + 1}–{Math.min(pageStart + pageSize, students.length)} of {students.length}
+          </div>
+
+          <div style={s.pageControls}>
+
+            <button
+              style={{
+                ...s.pageBtn,
+                opacity: safePage === 1 ? 0.4 : 1,
+                cursor: safePage === 1 ? 'default' : 'pointer'
+              }}
+              onClick={() => goToPage(safePage - 1)}
+              disabled={safePage === 1}
+            >
+              ← Prev
+            </button>
+
+            <span style={s.pageLabel}>
+              Page {safePage} of {totalPages}
+            </span>
+
+            <button
+              style={{
+                ...s.pageBtn,
+                opacity: safePage === totalPages ? 0.4 : 1,
+                cursor: safePage === totalPages ? 'default' : 'pointer'
+              }}
+              onClick={() => goToPage(safePage + 1)}
+              disabled={safePage === totalPages}
+            >
+              Next →
+            </button>
+
+          </div>
 
         </div>
       )}
@@ -400,5 +456,41 @@ const s = {
     padding:60,
     color:'#888780',
     fontSize:14
+  },
+
+  paginationRow: {
+    display:'flex',
+    alignItems:'center',
+    justifyContent:'space-between',
+    flexWrap:'wrap',
+    gap:12,
+    marginTop:16
+  },
+
+  pageInfo: {
+    fontSize:13,
+    color:'#888780'
+  },
+
+  pageControls: {
+    display:'flex',
+    alignItems:'center',
+    gap:12
+  },
+
+  pageBtn: {
+    background:'#fff',
+    color:'#1a1a18',
+    border:'1px solid #E8E6E0',
+    borderRadius:9,
+    padding:'8px 16px',
+    fontSize:13,
+    fontWeight:500
+  },
+
+  pageLabel: {
+    fontSize:13,
+    color:'#5F5E5A',
+    fontWeight:500
   },
 }
