@@ -47,22 +47,15 @@ export default function IssueDMC({ staffEmail }) {
       })
       .eq('id', student.id)
 
-    if (!error) {
+    if (error) {
+      alert(`Could not mark DMC as issued: ${error.message}`)
+      setIssuing(null)
+      return
+    }
 
-      setStudents(prev =>
-        prev.map(s =>
-          s.id === student.id
-            ? {
-                ...s,
-                dmc_issued: true,
-                issued_at: new Date().toISOString(),
-                issued_by: staffEmail
-              }
-            : s
-        )
-      )
-
-      await supabase.from('dmc_records').insert({
+    const { data: recordData, error: recordError } = await supabase
+      .from('dmc_records')
+      .insert({
         student_id: student.id,
         student_name: student.name,
         roll_number: student.roll_number,
@@ -72,9 +65,49 @@ export default function IssueDMC({ staffEmail }) {
         issued_by: staffEmail,
         issued_at: new Date().toISOString()
       })
+      .select()
 
-      showToast(`DMC issued to ${student.name}`)
+    if (recordError || !recordData || recordData.length === 0) {
+
+      // the students table was already updated above, but the record
+      // failed to save - most likely Row Level Security blocking the
+      // insert on dmc_records. Roll the student back to pending so the
+      // two tables don't disagree with each other.
+      await supabase
+        .from('students')
+        .update({
+          dmc_issued: false,
+          issued_at: null,
+          issued_by: null
+        })
+        .eq('id', student.id)
+
+      alert(
+        recordError
+          ? `DMC record could not be saved: ${recordError.message}`
+          : 'DMC record could not be saved. This is usually because Row ' +
+            'Level Security in Supabase is blocking inserts on the ' +
+            'dmc_records table. Add an INSERT policy for this table in Supabase.'
+      )
+
+      setIssuing(null)
+      return
     }
+
+    setStudents(prev =>
+      prev.map(s =>
+        s.id === student.id
+          ? {
+              ...s,
+              dmc_issued: true,
+              issued_at: new Date().toISOString(),
+              issued_by: staffEmail
+            }
+          : s
+      )
+    )
+
+    showToast(`DMC issued to ${student.name}`)
 
     setIssuing(null)
   }
