@@ -7,6 +7,7 @@ export default function Records() {
   const [college, setCollege] = useState('')
   const [date, setDate] = useState('')
   const [colleges, setColleges] = useState([])
+  const [deletingId, setDeletingId] = useState(null)
 
   useEffect(() => {
     supabase.from('dmc_records').select('college').then(({ data }) => {
@@ -26,6 +27,28 @@ export default function Records() {
   }
 
   function applyFilter() { fetchRecords(college, date) }
+
+  async function deleteRecord(record) {
+    const confirmed = window.confirm(
+      `Delete the DMC record for ${record.student_name} (${record.roll_number})? This cannot be undone.`
+    )
+    if (!confirmed) return
+
+    setDeletingId(record.id)
+
+    const { error } = await supabase
+      .from('dmc_records')
+      .delete()
+      .eq('id', record.id)
+
+    if (error) {
+      alert(`Could not delete record: ${error.message}`)
+    } else {
+      setRecords(prev => prev.filter(r => r.id !== record.id))
+    }
+
+    setDeletingId(null)
+  }
 
   function exportCSV() {
     const headers = ['Name', 'Roll Number', 'Course', 'Semester', 'College', 'Issued By', 'Issued At']
@@ -70,6 +93,7 @@ export default function Records() {
             <div style={{ ...s.th, flex:2 }}>College</div>
             <div style={s.th}>Issued By</div>
             <div style={s.th}>Date & Time</div>
+            <div style={{ ...s.th, flex: 0.6, textAlign: 'right' }}>Actions</div>
           </div>
           {records.length === 0 && <div style={s.empty}>Koi record nahi mila.</div>}
           {records.map(r => (
@@ -81,6 +105,16 @@ export default function Records() {
               <div style={{ ...s.td, flex:2 }}>{r.college}</div>
               <div style={s.td}>{r.issued_by}</div>
               <div style={s.td}>{new Date(r.issued_at).toLocaleString('en-IN')}</div>
+              <div style={{ ...s.td, flex: 0.6, textAlign: 'right' }}>
+                <button
+                  style={s.deleteBtn}
+                  onClick={() => deleteRecord(r)}
+                  disabled={deletingId === r.id}
+                  title="Delete record"
+                >
+                  {deletingId === r.id ? '…' : '🗑'}
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -107,4 +141,14 @@ const s = {
   trow: { display:'flex', padding:'11px 16px', borderBottom:'0.5px solid #F7F6F3', minWidth:900 },
   td: { flex:1, fontSize:13, color:'#1a1a18' },
   empty: { textAlign:'center', padding:40, color:'#888780', fontSize:14 },
+  deleteBtn: {
+    background: '#FCEBEB',
+    color: '#A32D2D',
+    border: '0.5px solid #F7C1C1',
+    borderRadius: 7,
+    padding: '5px 10px',
+    fontSize: 13,
+    cursor: 'pointer',
+    lineHeight: 1
+  },
 }
