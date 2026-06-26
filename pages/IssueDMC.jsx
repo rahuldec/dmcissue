@@ -8,6 +8,7 @@ export default function IssueDMC({ staffEmail }) {
   const [issuing, setIssuing] = useState(null)
   const [toast, setToast] = useState('')
   const [page, setPage] = useState(1)
+  const [expectedTotal, setExpectedTotal] = useState(null)
   const pageSize = 25
 
   useEffect(() => {
@@ -18,18 +19,68 @@ export default function IssueDMC({ staffEmail }) {
   async function fetchStudents() {
     setLoading(true)
 
-    let q = supabase
+    // Ask Postgres for the exact row count separately from fetching the
+    // actual rows. This lets us catch a mismatch (e.g. RLS quietly
+    // filtering some rows, or the row-fetch loop stopping early) even
+    // without opening DevTools.
+    let countQuery = supabase
       .from('students')
-      .select('*')
-      .order('name')
+      .select('*', { count: 'exact', head: true })
 
     if (search.trim()) {
-      q = q.or(`name.ilike.%${search}%,roll_number.ilike.%${search}%`)
+      countQuery = countQuery.or(`name.ilike.%${search}%,roll_number.ilike.%${search}%`)
     }
 
-    const { data } = await q
+    const { count } = await countQuery
+    setExpectedTotal(typeof count === 'number' ? count : null)
 
-    setStudents(data || [])
+    // Supabase/PostgREST caps a single request at 1000 rows by default.
+    // With more students than that, a single query silently truncates -
+    // so we page through in batches of 1000 until everything is fetched.
+    const batchSize = 1000
+    let allRows = []
+    let from = 0
+    let fetchError = null
+    let safety = 0 // hard ceiling so a bug here can never hang the page forever
+
+    while (safety < 50) {
+
+      safety += 1
+
+      let q = supabase
+        .from('students')
+        .select('*')
+        .order('name')
+        .range(from, from + batchSize - 1)
+
+      if (search.trim()) {
+        q = q.or(`name.ilike.%${search}%,roll_number.ilike.%${search}%`)
+      }
+
+      const { data, error } = await q
+
+      if (error) {
+        fetchError = error
+        break
+      }
+
+      if (!data) break
+
+      allRows = allRows.concat(data)
+
+      if (data.length < batchSize) break
+
+      from += batchSize
+    }
+
+    if (fetchError) {
+      alert(
+        `Could not load all students (stopped at ${allRows.length} rows): ` +
+        fetchError.message
+      )
+    }
+
+    setStudents(allRows)
     setLoading(false)
   }
 
@@ -185,6 +236,15 @@ export default function IssueDMC({ staffEmail }) {
         </div>
 
       </div>
+
+      {/* MISMATCH WARNING */}
+      {!loading && expectedTotal !== null && expectedTotal !== students.length && (
+        <div style={s.warningBanner}>
+          ⚠ Showing {students.length} of {expectedTotal} students in the database.
+          Some rows aren't loading — this is usually a Row Level Security
+          policy on the students table only allowing access to part of the data.
+        </div>
+      )}
 
       {/* LOADING */}
       {loading && (
@@ -416,6 +476,16 @@ const s = {
     padding:40,
     color:'#888780',
     fontSize:14
+  },
+
+  warningBanner: {
+    background:'#FFF7E0',
+    border:'1px solid #F0D98A',
+    color:'#7A5C00',
+    borderRadius:10,
+    padding:'10px 14px',
+    fontSize:13,
+    marginBottom:16
   },
 
   table: {
