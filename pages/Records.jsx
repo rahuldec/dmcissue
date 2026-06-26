@@ -10,19 +10,49 @@ export default function Records() {
   const [deletingId, setDeletingId] = useState(null)
 
   useEffect(() => {
-    supabase.from('dmc_records').select('college').then(({ data }) => {
-      if (data) setColleges([...new Set(data.map(d => d.college))].filter(Boolean).sort())
+    fetchAllRows('dmc_records', 'college').then(data => {
+      setColleges([...new Set(data.map(d => d.college))].filter(Boolean).sort())
     })
     fetchRecords()
   }, [])
 
+  // Supabase/PostgREST caps a single request at 1000 rows by default.
+  // This pages through in batches so large tables aren't silently truncated.
+  async function fetchAllRows(table, columns, applyFilters) {
+    const batchSize = 1000
+    let allRows = []
+    let from = 0
+
+    while (true) {
+      let q = supabase.from(table).select(columns)
+      if (applyFilters) q = applyFilters(q)
+      q = q.range(from, from + batchSize - 1)
+
+      const { data, error } = await q
+
+      if (error || !data) break
+
+      allRows = allRows.concat(data)
+
+      if (data.length < batchSize) break
+
+      from += batchSize
+    }
+
+    return allRows
+  }
+
   async function fetchRecords(col = college, dt = date) {
     setLoading(true)
-    let q = supabase.from('dmc_records').select('*').order('issued_at', { ascending: false })
-    if (col) q = q.eq('college', col)
-    if (dt) q = q.gte('issued_at', dt).lt('issued_at', dt + 'T23:59:59')
-    const { data } = await q
-    setRecords(data || [])
+
+    const data = await fetchAllRows('dmc_records', '*', q => {
+      let filtered = q.order('issued_at', { ascending: false })
+      if (col) filtered = filtered.eq('college', col)
+      if (dt) filtered = filtered.gte('issued_at', dt).lt('issued_at', dt + 'T23:59:59')
+      return filtered
+    })
+
+    setRecords(data)
     setLoading(false)
   }
 
@@ -54,7 +84,30 @@ export default function Records() {
         'Add a DELETE policy for this table (or for your logged-in role) in Supabase.'
       )
     } else {
+
       setRecords(prev => prev.filter(r => r.id !== record.id))
+
+      // Deleting a DMC record means it was effectively never issued -
+      // reset the matching student back to Pending so the two tables
+      // stay consistent with each other.
+      if (record.student_id) {
+
+        const { error: resetError } = await supabase
+          .from('students')
+          .update({
+            dmc_issued: false,
+            issued_at: null,
+            issued_by: null
+          })
+          .eq('id', record.student_id)
+
+        if (resetError) {
+          alert(
+            `Record deleted, but could not reset the student's status back ` +
+            `to Pending: ${resetError.message}`
+          )
+        }
+      }
     }
 
     setDeletingId(null)
